@@ -12,29 +12,21 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class DemoSecurityConfig {
+    //add support for JDBC
     @Bean
-    public InMemoryUserDetailsManager userDetailsManagerConfigurer(){
+    public UserDetailsManager userDetailsManager(DataSource dataSource){
+        JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
 
-        UserDetails john = User.builder()
-                .username("john")
-                .password("{noop}test123")
-                .roles("EMPLOYEE")
-                .build();
+        //define query to retrieve a user by username
+        jdbcUserDetailsManager.setUsersByUsernameQuery(
+                "select user_id, pw, active from members where user_id=?"
+        );
+        //define query to retrieve the authorities/roles by username
+        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery(
+                "select user_id, role from roles where user_id=?"
+        );
 
-        UserDetails mary = User.builder()
-                .username("mary")
-                .password("{noop}test123")
-                .roles("EMPLOYEE", "MANAGER")
-                .build();
-
-        UserDetails susan = User.builder()
-                .username("susan")
-                .password("{noop}test123")
-                .roles("EMPLOYEE", "MANAGER", "ADMIN")
-                .build();
-
-        return new InMemoryUserDetailsManager(john, mary, susan);
-
+        return  jdbcUserDetailsManager;
     }
 
     @Bean
@@ -57,6 +49,30 @@ public class DemoSecurityConfig {
         http.csrf(csrf -> csrf.disable());
 
         return http.build();
-
     }
+
+    /*@Bean
+    public InMemoryUserDetailsManager userDetailsManagerConfigurer(){
+
+        UserDetails john = User.builder()
+                .username("john")
+                .password("{noop}test123")
+                .roles("EMPLOYEE")
+                .build();
+
+        UserDetails mary = User.builder()
+                .username("mary")
+                .password("{noop}test123")
+                .roles("EMPLOYEE", "MANAGER")
+                .build();
+
+        UserDetails susan = User.builder()
+                .username("susan")
+                .password("{noop}test123")
+                .roles("EMPLOYEE", "MANAGER", "ADMIN")
+                .build();
+
+        return new InMemoryUserDetailsManager(john, mary, susan);
+
+    }*/
 }
